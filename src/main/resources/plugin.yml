@@ -1,0 +1,4 @@
+name: MafanaStashNetwork
+version: '${project.version}'
+main: me.TahaCheji.MafanaStashNetwork
+api-version: 1.19
