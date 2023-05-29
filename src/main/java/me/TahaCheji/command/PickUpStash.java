@@ -13,11 +13,17 @@ public class PickUpStash implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(label.equalsIgnoreCase("stash")) {
             Player player = (Player) sender;
-            if(MainStash.getInstance().getGamePlayerStash().getItems(player) == null) {
-                player.sendMessage(ChatColor.RED + "There is nothing in your stash");
+            if(args[0].equalsIgnoreCase("add")) {
+                MainStash.getInstance().getGamePlayerStash().addItem(player, player.getItemInHand());
                 return true;
             }
-            MainStash.getInstance().getGamePlayerStash().pickUpStash(player);
+            if(args[0].equalsIgnoreCase("pickup")) {
+                if (MainStash.getInstance().getGamePlayerStash().getItems(player) == null) {
+                    player.sendMessage(ChatColor.RED + "There is nothing in your stash");
+                    return true;
+                }
+                MainStash.getInstance().getGamePlayerStash().pickUpStash(player);
+            }
         }
         return false;
     }

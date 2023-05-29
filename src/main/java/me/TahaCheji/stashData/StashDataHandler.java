@@ -14,25 +14,25 @@ import java.util.List;
 public class StashDataHandler {
 
 
-    public String encodeItems(List<ItemStack> items) {
+    public String encodeItems(ItemStack[] items) {
         return itemStackArrayToBase64(items);
     }
 
-    public List<ItemStack> decodeItems(String data) throws Exception {
+    public ItemStack[] decodeItems(String data) throws Exception {
         return itemStackArrayFromBase64(data);
     }
 
-    public static String itemStackArrayToBase64(List<ItemStack> items) throws IllegalStateException {
+    public static String itemStackArrayToBase64(ItemStack[] items) throws IllegalStateException {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
 
             // Write the size of the inventory
-            dataOutput.writeInt(items.size());
+            dataOutput.writeInt(items.length);
 
             // Save every element in the list
-            for (int i = 0; i < items.size(); i++) {
-                dataOutput.writeObject(items.get(i));
+            for (int i = 0; i < items.length; i++) {
+                dataOutput.writeObject(items[i]);
             }
 
             // Serialize that array
@@ -43,7 +43,7 @@ public class StashDataHandler {
         }
     }
 
-    public static List<ItemStack> itemStackArrayFromBase64(String data) throws IOException {
+    public static ItemStack[] itemStackArrayFromBase64(String data) throws IOException {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
@@ -55,7 +55,7 @@ public class StashDataHandler {
             }
 
             dataInput.close();
-            return Arrays.asList(items);
+            return items;
         } catch (ClassNotFoundException e) {
             throw new IOException("Unable to decode class type.", e);
         }

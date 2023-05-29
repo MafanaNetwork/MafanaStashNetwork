@@ -4,13 +4,13 @@ import me.TahaCheji.mysqlData.MySQL;
 import me.TahaCheji.mysqlData.MysqlValue;
 import me.TahaCheji.mysqlData.SQLGetter;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class GamePlayerStash extends MySQL {
 
@@ -33,17 +33,19 @@ public class GamePlayerStash extends MySQL {
     }
 
     public void setItems(OfflinePlayer player, List<ItemStack> i) {
+        ItemStack[] itemStacks = i.toArray(new ItemStack[0]);
         sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
-        sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), new StashDataHandler().encodeItems(i)));
+        sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), new StashDataHandler().encodeItems(itemStacks)));
     }
 
     public List<ItemStack> getItems(OfflinePlayer player) {
         try {
-            return new StashDataHandler().decodeItems(sqlGetter.getString(player.getUniqueId(), new MysqlValue("ITEMS")));
+            return Arrays.asList(new StashDataHandler().decodeItems(sqlGetter.getString(player.getUniqueId(), new MysqlValue("ITEMS"))));
         } catch (Exception e) {
             return null;
         }
     }
+
 
     public String getRawItems(OfflinePlayer player) {
         return sqlGetter.getString(player.getUniqueId(), new MysqlValue("ITEMS"));
@@ -51,36 +53,101 @@ public class GamePlayerStash extends MySQL {
 
     public void addItem(OfflinePlayer player, ItemStack itemStack) {
         List<ItemStack> i = getItems(player);
-        i.add(itemStack);
-        String s = new StashDataHandler().encodeItems(i);
+        if (i == null) {
+            List<ItemStack> itemStacks = new ArrayList<>();
+            itemStacks.add(itemStack);
+            String s = new StashDataHandler().encodeItems(itemStacks.toArray(new ItemStack[0]));
+            sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
+            sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), s));
+            return;
+        }
+        List<ItemStack> updatedItems = new ArrayList<>(i); // Create a new ArrayList from i
+        updatedItems.add(itemStack);
+        String s = new StashDataHandler().encodeItems(updatedItems.toArray(new ItemStack[0]));
         sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
         sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), s));
     }
 
-    public void removeItem(OfflinePlayer player, ItemStack itemStack) {
-        List<ItemStack> i = getItems(player);
-        for(ItemStack item : i) {
-            if(item.getItemMeta().getDisplayName().equals(itemStack.getItemMeta().getDisplayName())) {
-                i.remove(item);
-                break;
+
+    public void removeItem(OfflinePlayer player, ItemStack itemsToRemove) {
+        List<ItemStack> items = new ArrayList<>(getItems(player));
+        Iterator<ItemStack> iterator = items.iterator();
+        while (iterator.hasNext()) {
+            ItemStack itemStack = iterator.next();
+            if (itemStack == null || itemStack.getType() == Material.AIR) {
+                continue;
+            }
+                if (itemsToRemove.getItemMeta().getDisplayName().equals(itemStack.getItemMeta().getDisplayName())) {
+                    iterator.remove();
+                    break;
             }
         }
-        String s = new StashDataHandler().encodeItems(i);
-        sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
-        sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), s));
+        setItems(player, items);
     }
 
     public void pickUpStash(Player player) {
-        for(ItemStack itemStack : getItems(player)) {
-            if(player.getInventory().isEmpty()) {
-                player.getInventory().addItem(itemStack);
-                player.sendMessage(ChatColor.GREEN + "+" + itemStack.getItemMeta().getDisplayName());
-            } else {
-                player.getWorld().dropItem(player.getLocation(), itemStack);
+        List<ItemStack> items = new ArrayList<>(getItems(player));
+        if(items.size() == 0) {
+            player.sendMessage("No items in your stash");
+            return;
+        }
+        if (items != null) {
+            List<ItemStack> itemsToRemove = new ArrayList<>();
+
+            for (ItemStack itemStack : items) {
+                if (!player.getInventory().isEmpty()) {
+                    player.getInventory().addItem(itemStack);
+                    player.sendMessage(ChatColor.GREEN + "+" + itemStack.getItemMeta().getDisplayName() + " x" + itemStack.getAmount());
+                    itemsToRemove.add(itemStack);
+                } else {
+                    player.getWorld().dropItem(player.getLocation(), itemStack);
+                }
             }
-            removeItem(player, itemStack);
+
+            Iterator<ItemStack> iterator = items.iterator();
+            while (iterator.hasNext()) {
+                ItemStack itemStack = iterator.next();
+                if (itemStack == null || itemStack.getType() == Material.AIR) {
+                    continue;
+                }
+                for (ItemStack i : itemsToRemove) {
+                    if (i == null || i.getType() == Material.AIR) {
+                        continue;
+                    }
+                    if (i.getItemMeta().getDisplayName().equals(itemStack.getItemMeta().getDisplayName())) {
+                        iterator.remove();
+                        break;
+                    }
+                }
+            }
+
+            setItems(player, items);
         }
     }
+
+
+    private void removeItems(OfflinePlayer player, List<ItemStack> itemsToRemove) {
+        List<ItemStack> items = new ArrayList<>(getItems(player));
+        Iterator<ItemStack> iterator = items.iterator();
+        while (iterator.hasNext()) {
+            ItemStack itemStack = iterator.next();
+            if (itemStack == null || itemStack.getType() == Material.AIR) {
+                continue;
+            }
+            for (ItemStack i : itemsToRemove) {
+                if (i == null || i.getType() == Material.AIR) {
+                    continue;
+                }
+                if (i.getItemMeta().getDisplayName().equals(itemStack.getItemMeta().getDisplayName())) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+
+        setItems(player, items);
+    }
+
 
     @Override
     public void connect() {
