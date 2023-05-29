@@ -35,7 +35,6 @@ public class GamePlayerStash extends MySQL {
     public void setItems(OfflinePlayer player, List<ItemStack> i) {
         sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
         sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), new StashDataHandler().encodeItems(i)));
-        sqlGetter.setUUID(new MysqlValue("UUID", player.getUniqueId(), player.getUniqueId()));
     }
 
     public List<ItemStack> getItems(OfflinePlayer player) {
@@ -56,7 +55,6 @@ public class GamePlayerStash extends MySQL {
         String s = new StashDataHandler().encodeItems(i);
         sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
         sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), s));
-        sqlGetter.setUUID(new MysqlValue("UUID", player.getUniqueId(), player.getUniqueId()));
     }
 
     public void removeItem(OfflinePlayer player, ItemStack itemStack) {
@@ -70,7 +68,6 @@ public class GamePlayerStash extends MySQL {
         String s = new StashDataHandler().encodeItems(i);
         sqlGetter.setString(new MysqlValue("NAME", player.getUniqueId(), player.getName()));
         sqlGetter.setString(new MysqlValue("ITEMS", player.getUniqueId(), s));
-        sqlGetter.setUUID(new MysqlValue("UUID", player.getUniqueId(), player.getUniqueId()));
     }
 
     public void pickUpStash(Player player) {
@@ -88,7 +85,7 @@ public class GamePlayerStash extends MySQL {
     @Override
     public void connect() {
         super.connect();
-        if(this.isConnected()) sqlGetter.createTable("players_stash", new MysqlValue("NAME", ""), new MysqlValue("ITEMS", ""),
-                new MysqlValue("UUID", UUID.randomUUID()));
+        if(this.isConnected()) sqlGetter.createTable("players_stash", new MysqlValue("NAME", ""),
+                new MysqlValue("ITEMS", ""));
     }
 }

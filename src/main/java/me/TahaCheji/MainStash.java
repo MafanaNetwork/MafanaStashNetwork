@@ -1,5 +1,7 @@
 package me.TahaCheji;
 
+import me.TahaCheji.command.PickUpStash;
+import me.TahaCheji.event.GamePlayerJoinEvent;
 import me.TahaCheji.stashData.GamePlayerStash;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -11,6 +13,8 @@ public final class MainStash extends JavaPlugin {
     public void onEnable() {
         instance = this;
         gamePlayerStash.connect();
+        getServer().getPluginManager().registerEvents(new GamePlayerJoinEvent(), this);
+        getCommand("stash").setExecutor(new PickUpStash());
     }
 
     @Override
