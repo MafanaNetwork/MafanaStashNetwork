@@ -17,6 +17,10 @@ public class PickUpStash implements CommandExecutor {
                 MainStash.getInstance().getGamePlayerStash().addItem(player, player.getItemInHand());
                 return true;
             }
+            if(args[0].equalsIgnoreCase("clear")) {
+                MainStash.getInstance().getGamePlayerStash().setItems(player, null);
+                return true;
+            }
             if(args[0].equalsIgnoreCase("pickup")) {
                 if (MainStash.getInstance().getGamePlayerStash().getItems(player) == null) {
                     player.sendMessage(ChatColor.RED + "There is nothing in your stash");
